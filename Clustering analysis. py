@@ -1,0 +1,66 @@
+import seaborn as sns
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn import preprocessing
+
+df = pd.read_csv('/Users/jadonzhou/Research Projects/Healthcare Predictives 1/ECG research (1)/Clustering analysis/ClusteringDatabase.csv')
+df=df.apply(lambda x: x.fillna(x.median()),axis=0)
+
+fig = plt.figure(dpi=200)
+sns.pairplot(df,diag_kind="kde", hue="Stroke", 
+             vars = ['Baseline age, years', 'LVEF', 'HR','Total_P_area_mean','PTFV1','PRint_mean','PRint_SD'],
+             palette="husl",
+             markers=["+", "D"]) 
+
+
+# Create an instance of the PairGrid class.
+grid = sns.PairGrid(data= df,
+                    vars = ['Baselineageyears', 'LVEF', 
+                    'HR','Total_P_area_mean','PTFV1','PRint_mean','PRint_SD'], size = 4)
+# Map a scatter plot to the upper triangle
+grid = grid.map_upper(plt.scatter)
+# Map a histogram to the diagonal
+grid = grid.map_diag(plt.hist, bins = 5, 
+                     edgecolor = 'k')
+# Map a density plot to the lower triangle
+grid = grid.map_lower(sns.kdeplot, cmap = 'Reds')
+
+
+
+# Import the library
+from sklearn.cluster import KMeans# To make sure our work becomes reproducible
+X_transformed = preprocessing.normalize(df)
+inertia = []# Iterating the process
+for i in range(2, 10):
+  # Instantiate the model
+    model = KMeans(n_clusters=i)
+  # Fit The Model
+    model.fit(X_transformed)
+  # Extract the error of the model
+    inertia.append(model.inertia_)# Visualize the model
+fig = plt.figure(dpi=200)
+sns.pointplot(x=list(range(2, 10)), y=inertia)
+plt.title('SSE on K-Means based on # of clusters')
+plt.show()
+plt.xlabel('Number of clusters')
+plt.ylabel("Inertia")
+plt.title("Inertia of Cosine k-Means versus number of clusters")
+plt.savefig("/Users/jadonzhou/Research Projects/OneDrive/K Man HKU/Cytokines HBV/intertia_cosine_kmeans.jpg", dpi=300)
+
+
+# To make sure our work becomes reproducible
+model = KMeans(n_clusters=4)# Fit the model
+model.fit(X_transformed)# Predict the cluster from the data and save it
+cluster = model.predict(X_transformed)# Add to the dataframe and show the result
+df['cluster'] = cluster
+df.head()
+#dfnew=df.groupby('cluster') 
+df.to_csv("/Users/jadonzhou/Research Projects/Healthcare Predictives 1/ECG research (1)/Clustering analysis/ClusteringDatabaseResults.csv")
+
+
+
+
+
+
+

@@ -1,0 +1,86 @@
+import pandas as pd
+import numpy as np
+import pandas as pd
+from pandas import DataFrame
+import datetime as dt
+import re
+import csv
+from sklearn.linear_model import LinearRegression,LogisticRegression,Ridge,RidgeCV,Lasso, LassoCV
+from sklearn.model_selection import train_test_split,GridSearchCV,cross_val_score,cross_validate
+from sklearn import  metrics as mt
+from  statsmodels.stats.outliers_influence import variance_inflation_factor
+import scipy.stats as stats
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from decimal import *
+from collections import Counter
+import category_encoders as ce
+import math
+from scipy import stats
+from scipy.stats.mstats import kruskalwallis
+from math import floor
+def floored_percentage(val, digits):
+    val *= 10 ** (digits + 2)
+    return '{1:.{0}f}%'.format(digits, floor(val)/10 ** digits)
+def median(x):
+    x = sorted(x)
+    length = len(x)
+    mid, rem = divmod(length, 2)    # divmod函数返回商和余数
+    if rem:
+        return x[:mid], x[mid+1:], x[mid]
+    else:
+        return x[:mid], x[mid:], (x[mid-1]+x[mid])/2
+    
+Data = pd.read_csv("/Users/jadonzhou/Research Projects/Healthcare Predictives/Variable variability studies/FM cohort studies/TG Mortality/Database.csv", encoding='windows-1252')
+#continuous
+#continuousData=Data.iloc[:,37:79]
+#Data=Data[Data['filter']==0]
+continuousData=Data
+descriptiveResults=[]
+variableVectors=[]
+for i in range(continuousData.shape[1]):
+   variableVector=continuousData.iloc[:,i].dropna() 
+   variableVectors.append(variableVector)
+   if len(variableVector):
+       patientNumber=len(variableVector)
+       #Left, Right, Median = median(variableVector)
+       quantile=np.percentile(list(map(float, variableVector.tolist())), (25, 50, 75), interpolation='midpoint')
+       Median=round(quantile[1],4)
+       Left=round(quantile[0],4)
+       Right=round(quantile[2],4)
+       maxvalue=max(list(map(float, variableVector.tolist())))
+       string=str(Median)+"("+str(Left)+"-"+str(Right)+");"+str(maxvalue);
+       #descriptiveResults.append([continuousData.columns[i], 'n='+str(patientNumber),continuousData.columns[i]+';n='+str(patientNumber),string,string+";n="+str(patientNumber)])
+       descriptiveResults.append([continuousData.columns[i],string,";n="+str(patientNumber)])
+   else:
+       descriptiveResults.append([continuousData.columns[i],0,0])
+descriptiveResults=pd.DataFrame(descriptiveResults)
+descriptiveResults.to_csv('/Users/jadonzhou/Research Projects/Healthcare Predictives/Variable variability studies/FM cohort studies/TG Mortality/statsContinuous1.csv')
+
+# categorical
+Data = pd.read_csv("/Users/jadonzhou/Research Projects/Healthcare Predictives/Variable variability studies/FM cohort studies/TG Mortality/Database.csv", encoding='windows-1252')
+#Data=Data[Data['Event']==1]
+#Categorical=Data.iloc[:,2:37]
+Categorical=Data
+variableVectors=[]
+descriptiveResults=[]
+for i in range(Categorical.shape[1]):
+    ValueNumber=len(Categorical.iloc[:,i].dropna())
+    if ValueNumber:
+        Percentage=floored_percentage(Categorical.iloc[:,i].dropna().sum()/ValueNumber, 2)
+        format(Categorical.iloc[:,i].dropna().sum()/ValueNumber, '.0%')
+        string=str(Categorical.iloc[:,i].dropna().sum())+"("+Percentage+")";
+        descriptiveResults.append([Categorical.columns[i],string,";n="+str(Categorical.iloc[:,i].dropna().sum())])
+    else: 
+        descriptiveResults.append([Categorical.columns[i],"", ""])       
+variableVectors=pd.DataFrame(variableVectors)
+descriptiveResults=pd.DataFrame(descriptiveResults)
+descriptiveResults.to_csv('/Users/jadonzhou/Research Projects/Healthcare Predictives/Variable variability studies/FM cohort studies/TG Mortality/statsCategorical1.csv')
+
+
+
+
+
+
+
+
